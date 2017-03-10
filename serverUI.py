@@ -1,9 +1,9 @@
 #importing modules required
 from ttk import *
 from Tkinter import *
+from PIL import Image, ImageTk
 import tkFont
 import cv2
-from PIL import Image, ImageTk
 import os
 import numpy as np
 import socket
