@@ -8,15 +8,17 @@ import os
 import numpy as np
 import socket
 import cv2
+import threading
 
 # TCP address and port
 TCP_IP = socket.gethostbyname_ex(socket.gethostname())[2][0]
-TCP_PORT = 5001
+TCP_PORT1 = 5001
+TCP_PORT2 = 5002
 
 # AF_INET -> IPv4, SOCK_STREAM -> TCP
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 print 'Socket created'
-server.bind((TCP_IP, TCP_PORT))
+server.bind((TCP_IP, TCP_PORT1))
 print 'Socket bind complete'
 server.listen(True)
 print 'Socket now listening'
@@ -37,7 +39,7 @@ def recvall(server, count):
 def show_vid(): 
     label_img = Label(frame_img)
     label_img.grid(row=0, column=0, padx=100, pady=5)       
-	
+    
     length = recvall(conn,16)
     stringData = recvall(conn, int(length))
     data = np.fromstring(stringData, dtype='uint8')
@@ -47,7 +49,7 @@ def show_vid():
     imgtk = ImageTk.PhotoImage(image=img)
     label_img.imgtk = imgtk
     label_img.configure(image=imgtk)
-    label_img.after(10, show_vid)	
+    label_img.after(10, show_vid)   
 
 #function to set up the control UI
 def ui_init():
@@ -64,38 +66,59 @@ def ui_init():
     label.grid(row=1, column=1, columnspan=2)
 
     #forward button
-    button_fwd = Button(frame_btn,text="Forward",borderwidth=4, command=act, height = 2, width = 20,font=helv36) 
+    button_fwd = Button(frame_btn,text="Forward",borderwidth=4, command=forward, height = 2, width = 20,font=helv36) 
     button_fwd.grid(row=2, column=1, columnspan=2)
 
     #backward button
-    button_bwd = Button(frame_btn,text="Backward",borderwidth=4,command=act, height = 2, width = 20,font=helv36) 
+    button_bwd = Button(frame_btn,text="Backward",borderwidth=4,command=backward, height = 2, width = 20,font=helv36) 
     button_bwd.grid(row=4, column=1, columnspan=2)
 
     #left button
-    button_left = Button(frame_btn,text="Left",borderwidth=4,command=act, height = 2, width = 10,font=helv36)
+    button_left = Button(frame_btn,text="Left",borderwidth=4,command=left, height = 2, width = 10,font=helv36)
     button_left.grid(row=3, column=0, columnspan=2)
 
     #right button
-    button_right = Button(frame_btn,text="Right",borderwidth=4,command=act, height = 2, width = 10,font=helv36) 
+    button_right = Button(frame_btn,text="Right",borderwidth=4,command=right, height = 2, width = 10,font=helv36) 
     button_right.grid(row=3, column=2, columnspan=2)
 
-# defines an event function - for click of button
-def act(): 
-    print "I-M-pressed"
+#functions for click of buttons
+def forward(): 
+    print "fwd-pressed"
+    server.sendData("F")
+    print "fwd-send"
+
+def backward(): 
+    print "bwd-pressed"
+    server.send("B")
+    print "bwd-send"
+
+def left(): 
+    print "left-pressed"
+    server.send("L")
+    print "left-send"
+    
+def right(): 
+    print "right-pressed"
+    server.send("R")
+    print "right-send"  
+
 
 if __name__ == '__main__':
     root = Tk(className ="Server GUI")
     width = root.winfo_screenwidth()
     height = root.winfo_screenheight()
     root.geometry(str(width) + "x" + str(height))
-	
+    
     frame_img = Frame(root)
     frame_btn = Frame(root)
     frame_img.pack(side = LEFT)
     frame_btn.pack(side = RIGHT)
-	             
-    ui_init()
-    show_vid()
+    
+    chatThread = threading.Thread(name='chat', target=ui_init)
+    imageThread = threading.Thread(name='image', target=show_vid)
+    chatThread.start()
+    imageThread.start()
+	
     root.mainloop()                                  #keeps the application in an infinite loop so it works continuosly
 
 server.close()
