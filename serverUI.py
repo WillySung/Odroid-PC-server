@@ -9,21 +9,20 @@ import numpy as np
 import socket
 import cv2
 import threading
+import pickle
 
 # TCP address and port
 TCP_IP = socket.gethostbyname_ex(socket.gethostname())[2][0]
-TCP_PORT1 = 5001
-TCP_PORT2 = 5002
+TCP_PORT = 5001
 
 # AF_INET -> IPv4, SOCK_STREAM -> TCP
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 print 'Socket created'
-server.bind((TCP_IP, TCP_PORT1))
+server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+server.bind((TCP_IP, TCP_PORT))
 print 'Socket bind complete'
-server.listen(True)
+server.listen(5)
 print 'Socket now listening'
-conn, addr = server.accept()
-print 'Connected with ' + addr[0] + ':' + str(addr[1])
 
 #function to receive image from odroid
 def recvall(server, count):
@@ -84,26 +83,29 @@ def ui_init():
 #functions for click of buttons
 def forward(): 
     print "fwd-pressed"
-    server.sendData("F")
+    conn.send('F')
     print "fwd-send"
 
 def backward(): 
     print "bwd-pressed"
-    server.send("B")
+    conn.send('B')
     print "bwd-send"
 
 def left(): 
     print "left-pressed"
-    server.send("L")
+    conn.send('L')
     print "left-send"
     
 def right(): 
     print "right-pressed"
-    server.send("R")
+    conn.send('R')
     print "right-send"  
 
 
 if __name__ == '__main__':
+    conn, addr = server.accept()
+    print 'Connected with ' + addr[0] + ':' + str(addr[1])
+
     root = Tk(className ="Server GUI")
     width = root.winfo_screenwidth()
     height = root.winfo_screenheight()
@@ -117,7 +119,9 @@ if __name__ == '__main__':
     chatThread = threading.Thread(name='chat', target=ui_init)
     imageThread = threading.Thread(name='image', target=show_vid)
     chatThread.start()
+    print 'chatThread created'
     imageThread.start()
+    print 'imageThread created'
 	
     root.mainloop()                                  #keeps the application in an infinite loop so it works continuosly
 
