@@ -24,6 +24,10 @@ print 'Socket bind complete'
 server.listen(5)
 print 'Socket now listening'
 
+# flag for terminating
+EXIT = False
+pickle.dump(EXIT, open("exit_server.txt", "w"))
+
 #function to receive image from odroid
 def recvall(server, count):
     buf = b''
@@ -49,6 +53,11 @@ def show_vid():
     label_img.imgtk = imgtk
     label_img.configure(image=imgtk)
     label_img.after(10, show_vid)   
+	
+    if cv2.waitKey(5) & 0xFF == 27:
+            print("Exit the program")
+            EXIT = True
+            pickle.dump(EXIT, open("exit_server.txt", "w"))
 
 #function to set up the control UI
 def ui_init():
@@ -80,7 +89,7 @@ def ui_init():
     button_right = Button(frame_btn,text="Right",borderwidth=4,command=right, height = 2, width = 10,font=helv36) 
     button_right.grid(row=3, column=2, columnspan=2)
 
-#functions for click of buttons
+#functions for click reactions of buttons
 def forward(): 
     print "fwd-pressed"
     conn.send('F')
@@ -123,6 +132,12 @@ if __name__ == '__main__':
     imageThread.start()
     print 'imageThread created'
 	
+    if cv2.waitKey(5) & 0xFF == 27:
+            print("Client disconnect!")
+            Leaving = pickle.load(open("exit_server.txt", "r"))
+            if Leaving:
+               os.exit()
+
     root.mainloop()                                  #keeps the application in an infinite loop so it works continuosly
 
 server.close()
